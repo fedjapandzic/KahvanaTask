@@ -1,11 +1,23 @@
 import React from 'react';
 import 'bootstrap/dist/css/bootstrap.css';
 import './App.css';
-import {MdClose} from 'react-icons/md';
-import {useState} from 'react';
+import {MdClose, MdDelete, MdEdit} from 'react-icons/md';
+import {useState, useEffect} from 'react';
 import axios from 'axios';
 
 axios.defaults.baseURL = "http://localhost:8080"
+
+interface UserData {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumbers: [{
+    type: string;
+    value: string;
+  }];
+}
+
 
 function App() {
   const [addSection, setAddSection] = useState(false)
@@ -13,23 +25,29 @@ function App() {
     firstName: "",
     lastName: "",
     email: "",
-    phoneNumbers: {
+    phoneNumbers: [{
       type: "primary",
       value: ""
-    }
+    }]
     
   })
+  const [dataList,setDataList] = useState<UserData[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 5;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) =>{
     const {value,name} = e.target
 
     if (name.startsWith("phoneNumbers.")) {
+      const field = name.replace("phoneNumbers.","");
       setFormData((prev) => ({
         ...prev,
-        phoneNumbers: {
-          ...prev.phoneNumbers,
-          [name.replace("phoneNumbers.", "")]: value
-        }
+        phoneNumbers: prev.phoneNumbers.map((phoneNumber, index) => {
+          if(index === 0){
+            return { ...phoneNumber, [field]: value};
+          }
+          return phoneNumber;
+        })
       }));
     } else {
       setFormData((prev)=>{
@@ -48,10 +66,12 @@ function App() {
     if (name === "phoneNumbers.type") {
       setFormData((prev) => ({
         ...prev,
-        phoneNumbers: {
-          ...prev.phoneNumbers,
-          type: value
-        }
+        phoneNumbers: prev.phoneNumbers.map((phoneNumber, index) => {
+          if (index === 0) {
+            return { ...phoneNumber, type: value };
+          }
+          return phoneNumber;
+        })
       }));
     } else {
       setFormData((prev) => ({
@@ -64,13 +84,34 @@ function App() {
 
   const handleSubmit = async(e: React.FormEvent<HTMLFormElement>)=>{
     e.preventDefault()
-    const data = axios.post("/users", formData)
-    console.log(data)
+    const response = await axios.post("/users", formData)
+    console.log(response)
+    if(response.statusText === "Created"){
+      setAddSection(false)
+    }
   }
+
+  const getFetchData = async()=>{
+    const response = await axios.get("/users")
+    console.log("Return fetched data:")
+    console.log(response)
+    setDataList(response.data)
+  
+  }
+
+  useEffect(()=>{
+    getFetchData()
+  }, []);
+
+  console.log(dataList)
+
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = dataList.slice(indexOfFirstUser, indexOfLastUser);
 
   return (
     <div className='container'>
-      <button type='button' className='btn btn-info' onClick={()=>setAddSection(true)}>+</button>
+      <button type='button' className='btn btn-info' onClick={()=>setAddSection(true)}>Add User</button>
 
 
       {
@@ -113,6 +154,62 @@ function App() {
       </div>
         )
       }
+
+      <div className='container'>
+      <table className="table">
+  <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">First Name</th>
+      <th scope="col">Last Name</th>
+      <th scope="col">Email</th>
+      <th scope="col">Phone Number(s)</th>
+      <th scope='col'>Edit/Delete</th>
+    </tr>
+  </thead>
+  <tbody>
+    {
+      currentUsers.map((el) =>{
+        return(
+          <tr key={el._id}>
+            <td>{el._id}</td>
+            <td>{el.firstName}</td>
+            <td>{el.lastName}</td>
+            <td>{el.email}</td>
+            <td>
+              {el.phoneNumbers.map((phoneNumber, index)=>(
+                <div key={index}>
+                  Type: {phoneNumber.type} <br/> Number: {phoneNumber.value}
+                </div>
+              ))}
+            </td>
+            <td>
+              <ul className='list-inline m-0'>
+                <li className='list-inline-item'>
+                  <button className="btn btn-success btn-sm rounded-0" type="button" title="Edit"><MdEdit/></button>
+                </li>
+                <li className="list-inline-item">
+                  <button className="btn btn-danger btn-sm rounded-0" type="button" title="Delete"><MdDelete/></button>
+                </li>
+
+              </ul>
+            </td>
+          </tr>
+        )
+      })
+    }
+  </tbody>
+</table>
+<div className='pagination'>
+<button id='prev-button' className='btn btn-secondary' onClick={()=>setCurrentPage(currentPage-1)} disabled={currentPage===1}>
+      Previous
+    </button>
+    <button id='next-button' className='btn btn-secondary' onClick={()=>setCurrentPage(currentPage+1)} disabled={indexOfLastUser >= dataList.length}>
+      Next
+    </button>
+    
+</div>
+      </div>
       
 
     </div>

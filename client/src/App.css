@@ -24,6 +24,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1;
 }
 
 .addContainer form{
@@ -57,4 +58,12 @@
   border-radius: 20px;
   border: 1px solid black;
   cursor: pointer;
+}
+
+#next-button{
+  margin: auto;
+}
+
+#prev-button{
+  margin: auto;
 }
