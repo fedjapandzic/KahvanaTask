@@ -81,16 +81,6 @@ function App() {
     }
    
   };
-
-  const handleSubmit = async(e: React.FormEvent<HTMLFormElement>)=>{
-    e.preventDefault()
-    const response = await axios.post("/users", formData)
-    console.log(response)
-    if(response.statusText === "Created"){
-      setAddSection(false)
-    }
-  }
-
   const getFetchData = async()=>{
     const response = await axios.get("/users")
     console.log("Return fetched data:")
@@ -99,11 +89,27 @@ function App() {
   
   }
 
+  const handleSubmit = async(e: React.FormEvent<HTMLFormElement>)=>{
+    e.preventDefault()
+    const response = await axios.post("/users", formData)
+    console.log(response)
+    if(response.statusText === "Created"){
+      setAddSection(false)
+    }
+    getFetchData()
+
+  }
+
+
   useEffect(()=>{
     getFetchData()
   }, []);
 
-  console.log(dataList)
+const handleDelete = async (id:string) => {
+  await axios.delete("/users/"+id)
+  getFetchData()
+  alert("User deleted")  
+}
 
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
@@ -186,10 +192,10 @@ function App() {
             <td>
               <ul className='list-inline m-0'>
                 <li className='list-inline-item'>
-                  <button className="btn btn-success btn-sm rounded-0" type="button" title="Edit"><MdEdit/></button>
+                  <button className="btn btn-success btn-sm rounded-0" title="Edit"><MdEdit/></button>
                 </li>
                 <li className="list-inline-item">
-                  <button className="btn btn-danger btn-sm rounded-0" type="button" title="Delete"><MdDelete/></button>
+                  <button className="btn btn-danger btn-sm rounded-0" title="Delete" onClick={()=>handleDelete(el._id)}><MdDelete/></button>
                 </li>
 
               </ul>
