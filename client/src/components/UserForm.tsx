@@ -43,7 +43,8 @@ const UserForm: React.FC<{
           </select>
 
           <label htmlFor="phoneNumber">Phone number: </label>
-          <input type='text' className='form-control' id='phone-number' name='phoneNumbers.value' defaultValue={editUserData?.phoneNumbers[0].value} onChange={handleInputChange} required/>
+          <input type='tel' className='form-control' id='phone-number' name='phoneNumbers.value' pattern='[0-9]{3}-[0-9]{3}-[0-9]{4}' defaultValue={editUserData?.phoneNumbers[0].value} onChange={handleInputChange} required/>
+          <i>format: 111-222-3333</i>
           </div>
 
           <div className='form-group'>
