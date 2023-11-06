@@ -38,9 +38,11 @@ function createUser(newUser: User): User {
 function updateUser(userId: string, updatedUser: User): User | undefined {
     const userIndex = users.findIndex((user) => user._id === userId);
     if (userIndex !== -1) {
-        updatedUser._id = userId;
-        users[userIndex] = updatedUser;
-        return updatedUser;
+        const existingUser = users[userIndex]
+        const mergedUser = { ...existingUser, ...updatedUser }
+        mergedUser._id = userId;
+        users[userIndex] = mergedUser;
+        return mergedUser;
     }
     return undefined;
 }
