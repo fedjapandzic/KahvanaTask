@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import * as userQueries from '../queries/userQueries';
+import * as userQueries from '../functions/userDataFunctions';
 import { User } from '../interfaces/User';
 
 export function getAllUsers(req: Request, res: Response) {
