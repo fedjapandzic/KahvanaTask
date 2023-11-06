@@ -2,15 +2,15 @@ import React from 'react';
 import {useState, useEffect} from 'react';
 import "../App.css";
 import {MdClose} from 'react-icons/md';
-import { UserData } from '../types/UserData';
+import { UserTypes } from '../types/UserTypes';
 
-const NewUserForm: React.FC<{
+const UserForm: React.FC<{
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleClose: () => void;
   handleEditSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  editUserData: UserData | null;
+  editUserData: UserTypes | null;
 
 }> = ({ handleSubmit, handleInputChange, handleSelectChange, handleClose, editUserData, handleEditSubmit }) => {
   
@@ -55,4 +55,4 @@ const NewUserForm: React.FC<{
   )
 }
 
-export default NewUserForm
+export default UserForm
