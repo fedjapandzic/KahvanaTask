@@ -4,23 +4,27 @@ import './App.css';
 import {MdClose, MdDelete, MdEdit} from 'react-icons/md';
 import {useState, useEffect} from 'react';
 import axios from 'axios';
+import NewUserForm from './components/NewUserForm';
+import { UserData } from './types/UserData';
 
 axios.defaults.baseURL = "http://localhost:8080"
 
-interface UserData {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phoneNumbers: [{
-    type: string;
-    value: string;
-  }];
-}
+
 
 
 function App() {
   const [addSection, setAddSection] = useState(false)
+  const [editSection, setEditSection] = useState(false)
+  const [uniqueUserData, setUniqueUserData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumbers: [{
+      type: "primary",
+      value: ""
+    }]
+  })
+
   const [formData,setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -29,8 +33,18 @@ function App() {
       type: "primary",
       value: ""
     }]
-    
   })
+  const [editUserData,setEditUserData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumbers: [{
+      type: "",
+      value: ""
+    }],
+    _id: ""
+  })
+
   const [dataList,setDataList] = useState<UserData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 5;
@@ -39,15 +53,9 @@ function App() {
     const {value,name} = e.target
 
     if (name.startsWith("phoneNumbers.")) {
-      const field = name.replace("phoneNumbers.","");
       setFormData((prev) => ({
         ...prev,
-        phoneNumbers: prev.phoneNumbers.map((phoneNumber, index) => {
-          if(index === 0){
-            return { ...phoneNumber, [field]: value};
-          }
-          return phoneNumber;
-        })
+        phoneNumbers: [{ ...prev.phoneNumbers[0], value: value}]
       }));
     } else {
       setFormData((prev)=>{
@@ -57,21 +65,31 @@ function App() {
         }
       })
     }
-    
+    if(editUserData){
+      if (name.startsWith("phoneNumbers.")) {
+        setUniqueUserData((prev) => ({
+          ...prev,
+          phoneNumbers: [{ ...prev.phoneNumbers[0], value: value}]
+        }));
+      } else {
+        setUniqueUserData((prev)=>{
+          return{
+            ...prev,
+            [name] : value
+          }
+        })
+      }
+    }
+
   }
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { value, name } = e.target;
+      const { value, name } = e.target;
 
     if (name === "phoneNumbers.type") {
       setFormData((prev) => ({
         ...prev,
-        phoneNumbers: prev.phoneNumbers.map((phoneNumber, index) => {
-          if (index === 0) {
-            return { ...phoneNumber, type: value };
-          }
-          return phoneNumber;
-        })
+        phoneNumbers: [{...prev.phoneNumbers[0], type: value}]
       }));
     } else {
       setFormData((prev) => ({
@@ -79,14 +97,26 @@ function App() {
         [name]: value,
       }));
     }
+    if(editUserData){
+      if (name === "phoneNumbers.type") {
+        setUniqueUserData((prev) => ({
+          ...prev,
+          phoneNumbers: [{...prev.phoneNumbers[0], type: value}]
+        }));
+      } else {
+        setUniqueUserData((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      }
+    } 
    
   };
-  const getFetchData = async()=>{
+  const handleGetAll = async()=>{
     const response = await axios.get("/users")
-    console.log("Return fetched data:")
+    console.log("Fetched data:")
     console.log(response)
     setDataList(response.data)
-  
   }
 
   const handleSubmit = async(e: React.FormEvent<HTMLFormElement>)=>{
@@ -95,21 +125,46 @@ function App() {
     console.log(response)
     if(response.statusText === "Created"){
       setAddSection(false)
+      alert("User added")
     }
-    getFetchData()
-
+    handleGetAll()
   }
+
+  const handleDelete = async (id:string) => {
+    await axios.delete("/users/"+id)
+    handleGetAll()
+    alert("User deleted")  
+  }
+
+  const handleEdit = (user: UserData) => {
+    setEditUserData(user);
+    setUniqueUserData(user);
+    setEditSection(true);
+  }
+
+  const handleEditSubmit =async (e:React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log("OVO JE USER DATA \/")
+      console.log(editUserData)
+      
+      const userId = editUserData?._id; 
+      await axios.put("/users/" + userId , uniqueUserData);
+      setEditSection(false);
+      handleGetAll();
+      console.log("OVO JE UNIQUE DATA \/")
+      console.log(uniqueUserData)
+    
+  }
+
+  
 
 
   useEffect(()=>{
-    getFetchData()
-  }, []);
+    handleGetAll()
+    // console.log(editUserData)
+  }, [editUserData]);
 
-const handleDelete = async (id:string) => {
-  await axios.delete("/users/"+id)
-  getFetchData()
-  alert("User deleted")  
-}
+
 
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
@@ -122,42 +177,29 @@ const handleDelete = async (id:string) => {
 
       {
         addSection && (
-          <div className='addContainer'>
-        <form onSubmit={handleSubmit}>
-          <div className='close-btn' onClick={()=>setAddSection(false)}><MdClose/></div>
-          <div className='form-group'>
-          <label htmlFor="firstName">First name: </label>
-          <input type='text' className='form-control' id='first-name' name='firstName' onChange={handleInputChange} required/>
-          </div>
+          <NewUserForm
+          handleSubmit={handleSubmit}
+          handleInputChange={handleInputChange}
+          handleSelectChange={handleSelectChange}
+          handleClose={()=>setAddSection(false)}
+          editUserData={null}
+          handleEditSubmit={()=>{}}
           
-          <div className='form-group'>
-          <label htmlFor="lastName">Last name: </label>
-          <input type='text' className='form-control' id='last-name' name='lastName' onChange={handleInputChange} required/>
-          </div>
+          />
+        )
+      }
 
-          <div className='form-group'>
-          <label htmlFor="email">Email: </label>
-          <input type='email' className='form-control' id='email' name='email' onChange={handleInputChange} required/>
-          </div>
-
-          <div className='form-group'>
-          <label htmlFor="phoneNumberType">Phone number type: </label>
-          <select className='form-control' id='phone-number-type' name='phoneNumbers.type' onChange={handleSelectChange} required>
-            <option disabled hidden>Choose here</option>
-            <option value='primary' >Primary</option>
-            <option value='secondary'>Secondary</option>
-          </select>
-
-          <label htmlFor="phoneNumber">Phone number: </label>
-          <input type='text' className='form-control' id='phone-number' name='phoneNumbers.value' onChange={handleInputChange} required/>
-          </div>
-
-          <div className='form-group'>
-          <button type='submit' className='btn btn-success submit-button form-control'>Submit</button>
-          </div>
+      {
+        editSection && (
+          <NewUserForm
+          handleSubmit={()=>{}}
+          handleInputChange={handleInputChange}
+          handleSelectChange={handleSelectChange}
+          handleClose={()=>setEditSection(false)}
+          editUserData={editUserData}
+          handleEditSubmit={handleEditSubmit}
           
-        </form>
-      </div>
+          />
         )
       }
 
@@ -192,7 +234,7 @@ const handleDelete = async (id:string) => {
             <td>
               <ul className='list-inline m-0'>
                 <li className='list-inline-item'>
-                  <button className="btn btn-success btn-sm rounded-0" title="Edit"><MdEdit/></button>
+                  <button className="btn btn-success btn-sm rounded-0" title="Edit" onClick={()=> handleEdit(el)}><MdEdit/></button>
                 </li>
                 <li className="list-inline-item">
                   <button className="btn btn-danger btn-sm rounded-0" title="Delete" onClick={()=>handleDelete(el._id)}><MdDelete/></button>
