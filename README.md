@@ -37,7 +37,7 @@ cd client
 ```
 5. Start the frontend application:
 ```bash
-npm run start-front
+npm run start-frontend
 ```
 
 Open your web browser and navigate to http://localhost:3000 to access the application.  
